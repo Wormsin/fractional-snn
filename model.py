@@ -54,32 +54,34 @@ class Layer():
             out_spk, self.V_mem[i] = self.neuron.mem_dynamics(self.V_mem[i], self.weights[:, i], spikes)
             out_spikes[i] = out_spk
             dw_minus = self.post_synaptic_dynamics(out_spk, i)
-            self.weights[:, i] += self.lr*dw_minus*self.weights[:, i]  + self.lr*dw_plus*self.weights[:, i]*out_spk 
+            self.weights[:, i] += self.lr*dw_minus*self.weights[:, i]*spikes  + self.lr*dw_plus*self.weights[:, i]*out_spk 
         return out_spikes, self.V_mem
         
 
 class SNN():
-    def __init__(self, layers:Layer, input, L_time, classes, input_time) -> None:
+    def __init__(self, layers:Layer, input, L_time, classes, input_time, rate) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
         self.classes = classes
         self.time = input_time
+        self.dt = 0.1
+        self.rate = rate
 
-    def encoding(self):
-        input_spikes = np.zeros((self.input.shape[0], self.L_time))
-        for i in range(self.input.shape[0]):
-            for it in range(self.L_time):
-                if it<self.L_time*0.8 and it%20==0:
-                    dt = int(-np.log(np.random.uniform(0, 1))*self.input[i]*100)
-                    input_spikes[i, it+dt] = 1
-        return input_spikes
     
+    def poisson_encoding(self):
+        u_rand = np.random.rand(self.input.shape[0], self.L_time)
+        input_rate = self.input*self.rate
+        poisson_train = np.zeros((self.input.shape[0], self.L_time))
+        for it in range(self.input.shape[0]):
+            poisson_train[it] = 1. * (u_rand[it] < input_rate[it] * (self.dt / 1000.))
+        return poisson_train
+
 
     def inference(self):
         V = np.ones((1, self.classes))*self.layers[0].neuron.E_L
         spikes = []
-        input_spikes = self.encoding()
+        input_spikes = self.poisson_encoding()
         out_spikes = np.zeros((1, self.classes))
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
