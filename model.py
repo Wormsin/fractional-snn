@@ -23,7 +23,7 @@ class Fractional_LIF():
         v_pulse = max((spikes*self.spk_amp)*weights.T)
         v+=v_pulse
         spk = (v>=self.V_th)
-        if tr<=self.tref and v<self.V_th:
+        if tr<=self.tref and not spk:
             markov_term = ((self.dt)**(self.alfa))*(-(v-self.E_L)/self.tau_m)*gamma(2-self.alfa)+v
             if N>=2:
                 k = np.arange(0, N-1)

@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import gamma 
 
 def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest):
     fig, ax = plt.subplots(3)
@@ -35,10 +34,8 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     ax[1].set_title('output spikes', fontweight ='bold', fontsize = 10, loc = 'left')
     ax[2].set_title('output layer membrane potential, alfa = 1', fontweight ='bold', fontsize = 10, loc='left')
     ax[2].set_xlabel('time, ms', fontweight ='bold', fontsize = 10)
-    #plt.legend()
 
 def count_ISI(spikes):
-    #spikes = range_t[out_spks==1]
     isi = spikes[1:]-spikes[0:-1]
     return isi
 
