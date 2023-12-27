@@ -51,6 +51,3 @@ def plot_means(means, br_labels, x_labels, xname, yname):
     plt.xticks(np.arange(0, c, 1)+barWidth, 
             x_labels)
     plt.legend()
-
-
-
