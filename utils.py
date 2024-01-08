@@ -52,20 +52,3 @@ def plot_means(means, br_labels, x_labels, xname, yname):
     plt.xticks(np.arange(0, c, 1)+barWidth, 
             x_labels)
     plt.legend()
-
-'''
-range_t = np.arange(0, 10, 0.1)
-V0 = -70
-V_L = -70
-V = []
-v = V0
-for i in range_t:
-    if i ==0:
-        v = (-25*(v-V_L)+3000)/500 + v
-    else:
-        v = (-25*(v-V_L))/500 + v
-    V.append(v)
-
-plt.plot(range_t, V)
-plt.show()
-'''
