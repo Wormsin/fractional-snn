@@ -20,7 +20,7 @@ class Fractional_LIF():
         self.A_minus = stdp_Aminus
         self.A_plus = stdp_Aplus
             
-    def mem_dynamics(self, v, dV, tr, N):
+    def mem_dynamics(self, v, dV, tr, N, i_pulse):
         spk = (v>=self.V_th-0.01)
         if spk:
             tr = self.tref*2-self.dt
@@ -28,12 +28,12 @@ class Fractional_LIF():
             return spk*1, v, tr
         if tr<=self.tref:
             if N>=2 and self.alfa!=1:
-                markov_term = ((self.dt)**(self.alfa))*((-self.g*(v-self.E_L))/self.C)*gamma(2-self.alfa)+v
+                markov_term = ((self.dt)**(self.alfa))*((-self.g*(v-self.E_L)+i_pulse)/self.C)*gamma(2-self.alfa)+v
                 k = np.arange(0, N-1)
                 W = (N-k)**(1-self.alfa)-(N-1-k)**(1-self.alfa)
                 voltage_memory_trace = dV@W.T
             else :
-                markov_term = self.dt*((-self.g*(v-self.E_L))/self.C)+v
+                markov_term = self.dt*((-self.g*(v-self.E_L)+i_pulse)/self.C)+v
                 voltage_memory_trace = 0
             v = markov_term - voltage_memory_trace
         else:
@@ -75,10 +75,9 @@ class Layer():
         out_spikes = np.empty(self.out_features)
         self.N+=1
         for i in range(self.out_features):
-            i_pulse = max((spikes*self.neuron.spk_amp)*self.weights[:, i].T)
-            self.V_mem[i]+=i_pulse/self.neuron.g
+            i_pulse = max((spikes*self.neuron.spk_amp)*self.weights[:, i].T)*1000
             v_old = self.V_mem[i]
-            out_spk, self.V_mem[i], self.tr[i]= self.neuron.mem_dynamics(self.V_mem[i], self.dV[i][0:self.N[i]-1], self.tr[i], self.N[i])
+            out_spk, self.V_mem[i], self.tr[i]= self.neuron.mem_dynamics(self.V_mem[i], self.dV[i][0:self.N[i]-1], self.tr[i], self.N[i], i_pulse)
             v_new = self.V_mem[i]
             self.calc_dV(v_old, v_new, i)
             if train:
@@ -100,7 +99,7 @@ class SNN():
 
     def encoding(self):
         t_step = 1
-        chain = np.zeros((self.input.shape[0], self.L_time))
+        chain = np.ones((self.input.shape[0], self.L_time))
         input_rate = self.input*self.rate
         for it in range(self.input.shape[0]):
             t=0            
@@ -122,7 +121,6 @@ class SNN():
         V = np.ones((1, self.classes))*self.layers[0].neuron.E_L
         spikes = []
         input_spikes = self.encoding()
-        #input_spikes = np.ones((self.input.shape[0], self.L_time))
         out_spikes = np.zeros((1, self.classes))
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
