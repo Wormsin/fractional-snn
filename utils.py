@@ -5,7 +5,8 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     fig, ax = plt.subplots(3)
     for i in range(in_features):
         #ax[0].scatter(range_t[in_spikes[i]!=0], in_spikes[i][in_spikes[i]!=0]*(i+1),  s=0.8)
-        ax[0].vlines(range_t[in_spikes[i]!=0], 0+i, 1+i, color = (0.1, 0.2, 0.5*i))
+        #ax[0].vlines(range_t[in_spikes[i]!=0], 0+i, 1+i, color = (0.1, 0.2, 0.5*i))
+        ax[0].plot(range_t, in_spikes[i], color = 'orange')
     for i in range(out_features):
         #ax[1].scatter(range_t[out_spikes[i]!=0], out_spikes[i][out_spikes[i]!=0]*(i+1),  s=5)
         ax[1].vlines(range_t[out_spikes[i]!=0], 0+i, 1+i, color = (0.1, 0.5, 0.5*i))
@@ -27,12 +28,12 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     ax[1].set_xlim([-1, range_t[-1]+1])
     ax[2].set_xlim([-1, range_t[-1]+1])
 
-    ax[0].get_yaxis().set_visible(False)
+    #ax[0].get_yaxis().set_visible(False)
     ax[1].get_yaxis().set_visible(False)
 
-    ax[0].set_title('input spikes, nu = 0.6', fontweight ='bold', fontsize = 10, loc = 'left')
+    ax[0].set_title('input current nA, nu = 1, step = 1 ms, rate = 0.005', fontweight ='bold', fontsize = 10, loc = 'left')
     ax[1].set_title('output spikes', fontweight ='bold', fontsize = 10, loc = 'left')
-    ax[2].set_title('output layer membrane potential, alfa = 1', fontweight ='bold', fontsize = 10, loc='left')
+    ax[2].set_title('output layer membrane potential, alfa = 0.2', fontweight ='bold', fontsize = 10, loc='left')
     ax[2].set_xlabel('time, ms', fontweight ='bold', fontsize = 10)
 
 def count_ISI(spikes):
@@ -51,3 +52,20 @@ def plot_means(means, br_labels, x_labels, xname, yname):
     plt.xticks(np.arange(0, c, 1)+barWidth, 
             x_labels)
     plt.legend()
+
+'''
+range_t = np.arange(0, 10, 0.1)
+V0 = -70
+V_L = -70
+V = []
+v = V0
+for i in range_t:
+    if i ==0:
+        v = (-25*(v-V_L)+3000)/500 + v
+    else:
+        v = (-25*(v-V_L))/500 + v
+    V.append(v)
+
+plt.plot(range_t, V)
+plt.show()
+'''
