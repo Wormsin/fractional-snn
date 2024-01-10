@@ -86,7 +86,7 @@ class Layer():
         return out_spikes, self.V_mem
     
 class SNN():
-    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, train: bool) -> None:
+    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
@@ -96,10 +96,10 @@ class SNN():
         self.rate = rate
         self.nu = nu
         self.train = train
+        self.t_step = time_step*10
 
     def encoding(self):
-        t_step = 1
-        chain = np.ones((self.input.shape[0], self.L_time))
+        chain = np.zeros((self.input.shape[0], self.L_time))
         input_rate = self.input*self.rate
         for it in range(self.input.shape[0]):
             t=0            
@@ -112,9 +112,9 @@ class SNN():
                     levy_tau = np.sin(self.nu*np.pi*U2)*((np.sin((1-self.nu)*np.pi*U2))**(1/self.nu-1))/(((np.sin(np.pi*U2))**(1/self.nu))*((-np.log(U3))**(1/self.nu-1)))
                     tau = poisson_tau*levy_tau
                     t+=ceil(tau/self.dt)
-                    t = min(self.L_time-1*t_step, t)
-                    chain[it, t:t+t_step]=1
-                    t+=t_step
+                    t = min(self.L_time-1*self.t_step, t)
+                    chain[it, t:t+self.t_step]=1
+                    t+=self.t_step
         return chain
 
     def forward(self):

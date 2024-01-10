@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest):
+def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest, legend):
     fig, ax = plt.subplots(3)
     for i in range(in_features):
         #ax[0].scatter(range_t[in_spikes[i]!=0], in_spikes[i][in_spikes[i]!=0]*(i+1),  s=0.8)
@@ -31,9 +31,10 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     #ax[0].get_yaxis().set_visible(False)
     ax[1].get_yaxis().set_visible(False)
 
-    ax[0].set_title('input current nA, nu = 1, step = 1 ms, rate = 0.005', fontweight ='bold', fontsize = 10, loc = 'left')
+    nu, step, rate, alfa = legend
+    ax[0].set_title(f'input current nA, nu = {nu}, step = {step} ms, rate = {rate}', fontweight ='bold', fontsize = 10, loc = 'left')
     ax[1].set_title('output spikes', fontweight ='bold', fontsize = 10, loc = 'left')
-    ax[2].set_title('output layer membrane potential, alfa = 0.2', fontweight ='bold', fontsize = 10, loc='left')
+    ax[2].set_title(f'output layer membrane potential, alfa = {alfa}', fontweight ='bold', fontsize = 10, loc='left')
     ax[2].set_xlabel('time, ms', fontweight ='bold', fontsize = 10)
 
 def count_ISI(spikes):
