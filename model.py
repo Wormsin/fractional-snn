@@ -149,8 +149,7 @@ class SNN():
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
                     if self.check and (i+2)%5000 ==0:
-                        print(layer.dV[0][len(self.dVs):].shape, V.shape)
-                        self.checkpoints(layer.dV[0][len(self.dVs):], V.T[0], out_spikes.T[0], input_spikes[0], (i+2)//10)
+                        self.checkpoints(layer.dV[0][self.dVs[0].shape[0]:], V.T[0], out_spikes.T[0], input_spikes[0], (i+2)//10)
         #Firing rate
         num_spikes = np.sum(out_spikes!=0, axis=0)
         dT = np.max(out_spikes, axis=0)-np.min(out_spikes, axis=0)
