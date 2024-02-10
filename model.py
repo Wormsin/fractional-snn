@@ -2,6 +2,7 @@ import numpy as np
 from scipy.special import gamma 
 from math import ceil
 from numpy.random import uniform
+import pandas as pd
 
 class Fractional_LIF():
     def __init__(self, V_th, V_reset, E_L, spk_amp, g_L, C_m, dt, alfa, tref, stdp_rate, stdp_tm, stdp_tp, stdp_Aminus, stdp_Aplus) -> None:
@@ -86,7 +87,7 @@ class Layer():
         return out_spikes, self.V_mem
     
 class SNN():
-    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool) -> None:
+    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool, dVs, check:bool) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
@@ -96,7 +97,21 @@ class SNN():
         self.rate = rate
         self.nu = nu
         self.train = train
-        self.t_step = time_step*10
+        self.t_step = int(time_step*10)
+        self.dVs = dVs
+        self.check = check
+
+    def checkpoints(self, dV, V, out_spikes, in_spikes, time):
+        dV = np.append(dV, 0)
+        data = {
+            'V': V,
+            'out_spikes': out_spikes,
+            'in_spikes': in_spikes,
+            'dV': dV
+        }
+        df = pd.DataFrame(data)
+        file_name = "data_" + str(time) + '.csv'
+        df.to_csv(file_name, index=False)
 
     def encoding(self):
         chain = np.zeros((self.input.shape[0], self.L_time))
@@ -125,11 +140,17 @@ class SNN():
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
             for c, layer in enumerate(self.layers):
+                if i==0 and type(self.dVs)==list:
+                    layer.dV = list(np.copy(self.dVs))
+                    layer.N = np.ones((layer.out_features), dtype =np.int32)*(len(self.dVs[c]))
                 spikes, v = layer.feed(spikes, self.train)
                 if c==len(self.layers)-1:
                     V[-1]=np.where(spikes!=0, self.layers[-1].neuron.V_th, V[-1])
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
+                    if self.check and (i+2)%5000 ==0:
+                        print(layer.dV[0][len(self.dVs):].shape, V.shape)
+                        self.checkpoints(layer.dV[0][len(self.dVs):], V.T[0], out_spikes.T[0], input_spikes[0], (i+2)//10)
         #Firing rate
         num_spikes = np.sum(out_spikes!=0, axis=0)
         dT = np.max(out_spikes, axis=0)-np.min(out_spikes, axis=0)

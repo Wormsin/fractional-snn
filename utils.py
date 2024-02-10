@@ -1,5 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
+
+def get_csv_data(file_name):
+    with open(file_name, 'r') as f:
+        reader = csv.reader(f)
+        data = list(reader)
+    data_array = np.array(data)
+    V, out_spikes, in_spikes, dV = data_array[1:, 0].astype(float), data_array[1:, 1].astype(float), data_array[1:, 2].astype(float), data_array[1:, 3].astype(float)
+    in_spikes = np.expand_dims(in_spikes, 0)
+    out_spikes = np.expand_dims(out_spikes, 1)
+    V = np.expand_dims(V, 1)
+    return V, out_spikes, in_spikes, dV[:-1]
 
 def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest, legend):
     fig, ax = plt.subplots(3)
