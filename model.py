@@ -88,7 +88,7 @@ class Layer():
         return out_spikes, self.V_mem
     
 class SNN():
-    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool, dVs, check:bool) -> None:
+    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool, dVs, check:bool, file_name) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
@@ -101,8 +101,23 @@ class SNN():
         self.t_step = int(time_step*10)
         self.dVs = dVs
         self.check = check
+        self.file_name = file_name
 
-    def checkpoints(self, dV, V, out_spikes, in_spikes, time):
+    def count_adaptation_time(self, ins, outs, count, cur_time, time_adapt):
+        if ins*outs==1 and count ==0:
+            count+=1
+            time = cur_time
+        elif ins*outs==1 and count!=0:
+            count+=1
+            time = time_adapt
+        elif ins==0 and outs==0:
+            time = time_adapt
+        else:
+            count = 0
+            time = 0
+        return time, count
+
+    def checkpoints(self, dV, V, out_spikes, in_spikes):
         dV = np.append(dV, 0)
         data = {
             'V': V,
@@ -111,11 +126,10 @@ class SNN():
             'dV': dV
         }
         df = pd.DataFrame(data)
-        file_name = "data_" + str(time) + '.csv'
-        df.to_csv(file_name, index=False)
+        df.to_csv(self.file_name, index=False)
 
     def encoding(self):
-        chain = np.ones((self.input.shape[0], self.L_time))
+        chain = np.zeros((self.input.shape[0], self.L_time))
         input_rate = self.input*self.rate
         for it in range(self.input.shape[0]):
             t=0            
@@ -134,33 +148,39 @@ class SNN():
         return chain
 
     def forward(self):
+        adaptation_time = 0
+        count = 0
         V = np.ones((1, self.classes))*self.layers[-1].start_V
         spikes = []
         input_spikes = self.encoding()
         out_spikes = np.zeros((1, self.classes))
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
+            ins = spikes[0]
             for c, layer in enumerate(self.layers):
                 if i==0 and type(self.dVs)==list:
                     layer.dV = list(np.copy(self.dVs))
                     layer.N = np.ones((layer.out_features), dtype =np.int32)*(len(self.dVs[c]))
                 spikes, v = layer.feed(spikes, self.train)
+                #membrane adaptation
+                adaptation_time, count = self.count_adaptation_time(ins, spikes[0], count, i/10, adaptation_time)
                 if c==len(self.layers)-1:
                     V[-1]=np.where(spikes!=0, self.layers[-1].neuron.V_th, V[-1])
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
-                    if self.check and (i+2)%5000 ==0:
+                    if self.check and (i+2)%10000 ==0:
                         if type(self.dVs)==list:
                             dV = layer.dV[0][self.dVs[0].shape[0]:]
                         else:
                             dV = layer.dV[0]
                         #print(dV.shape, V.shape, out_spikes.shape, input_spikes[0, :(i+2)].shape)
-                        self.checkpoints(dV, V.T[0], out_spikes.T[0], input_spikes[0, :(i+2)], (i+2)//10)
+                        self.checkpoints(dV, V.T[0], out_spikes.T[0], input_spikes[0, :(i+2)])
 
         #Firing rate
         num_spikes = np.sum(out_spikes!=0, axis=0)
         dT = np.max(out_spikes, axis=0)-np.min(out_spikes, axis=0)
         dT =np.where(dT!=0, dT, 1)
+        print(adaptation_time, count)
         return input_spikes, (out_spikes!=0)*1, num_spikes/dT, V
 
 

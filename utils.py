@@ -4,7 +4,12 @@ import csv
 import os 
 
 def get_csv_data(dir):
-    for i, file_name in enumerate(os.listdir(dir)):
+    lst = os.listdir(dir)
+    lst = [int(name.split('_')[-1][:-4]) for name in lst]
+    indxes = np.argsort(lst)
+    file_names = os.listdir(dir)
+    for i, indx in enumerate(indxes):
+        file_name = file_names[indx]
         with open(os.path.join(dir, file_name), 'r') as f:
             reader = csv.reader(f)
             data = list(reader)
@@ -60,6 +65,7 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     ax[1].set_title('output spikes', fontweight ='bold', fontsize = 10, loc = 'left')
     ax[2].set_title(f'output layer membrane potential, alfa = {alfa}', fontweight ='bold', fontsize = 10, loc='left')
     ax[2].set_xlabel('time, ms', fontweight ='bold', fontsize = 10)
+    plt.show()
 
 def count_ISI(spikes):
     isi = spikes[1:]-spikes[0:-1]
