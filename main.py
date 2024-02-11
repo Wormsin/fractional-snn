@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 pars = {'V_th': -50.0, 'V_reset': -70.0, 'g_L': 25.0, 'C_m': 500,  'V_init': -70.0, 'E_L': -70.0, 'tref': 5.0, 'dt': 0.1,
-        'tm':5, 'tp':3, 'Ap':0.6, 'Am':-0.3, 'range_t': np.arange(0, 500, 0.1), 'Iinj': 4, 'lr': 1, 'stdp_rate': 0.0625}
+        'tm':5, 'tp':3, 'Ap':0.6, 'Am':-0.3, 'range_t': np.arange(0, 1000, 0.1), 'Iinj': 3, 'lr': 1, 'stdp_rate': 0.0625}
 
 V_th, V_reset = pars['V_th'], pars['V_reset']
 g_L, C_m = pars['g_L'], pars['C_m']
@@ -22,20 +22,24 @@ Ap = pars['Ap']
 stdp_rate = pars['stdp_rate']
 
 
-V, out_spikes, in_spikes, dV = utils.get_csv_data("data_500.csv")
-time_step = 0.1
-nu = 0.6
-rate = 0.5
-alfa = 1
+V, out_spikes, in_spikes, dV = utils.get_csv_data("output_data")
 
+#start_V = V[-1, 0]
+start_V = E_L
+time_step = pars['dt']*1
+nu = 1
+rate = 3
+alfa = 0.2
+'''
 np.random.seed(12)
 input = np.array([1])
 neuron = m.Fractional_LIF(V_th, V_reset, E_L, Iinj, g_L, C_m, dt, alfa, tref, stdp_rate, tm, tp, Am, Ap)
-layer1 = m.Layer(1, 1, neuron)
-snn = m.SNN([layer1], input, Lt, 1, range_t, rate=rate, nu=nu, time_step=time_step, train=False, dVs=[dV], check=True)
+layer1 = m.Layer(1, 1, start_V, neuron)
+snn = m.SNN([layer1], input, Lt, 1, range_t, rate=rate, nu=nu, time_step=time_step, train=False, dVs=0, check=True)
 in_spikes, out_spikes, out_rate, V = snn.forward()
-utils.plot_spikes(1, 1, in_spikes*Iinj, out_spikes.T, V, range_t, V_th, E_L, legend = [f"{nu}", f"{time_step}", f"{rate}", f"{alfa}"])
+'''
 
+utils.plot_spikes(1, 1, in_spikes*Iinj, out_spikes.T, V, range_t, V_th, E_L, legend = [f"{nu}", f"{time_step}", f"{rate}", f"{alfa}"])
 
 #plot from csv file
 #V, out_spikes, in_spikes, dV = utils.get_csv_data("data_500.csv")

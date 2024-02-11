@@ -1,17 +1,29 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
+import os 
 
-def get_csv_data(file_name):
-    with open(file_name, 'r') as f:
-        reader = csv.reader(f)
-        data = list(reader)
-    data_array = np.array(data)
-    V, out_spikes, in_spikes, dV = data_array[1:, 0].astype(float), data_array[1:, 1].astype(float), data_array[1:, 2].astype(float), data_array[1:, 3].astype(float)
+def get_csv_data(dir):
+    for i, file_name in enumerate(os.listdir(dir)):
+        with open(os.path.join(dir, file_name), 'r') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+        data_array = np.array(data)
+        v, out_s, in_s, dv = data_array[1:, 0].astype(float), data_array[1:, 1].astype(float), data_array[1:, 2].astype(float), data_array[1:, 3].astype(float)
+        if i ==0:
+            V = v
+            out_spikes = out_s
+            in_spikes = in_s
+            dV = dv[:-1]
+        else:
+            V = np.concatenate((V, v))
+            out_spikes = np.concatenate((out_spikes, out_s))
+            in_spikes = np.concatenate((in_spikes, in_s))
+            dV = np.concatenate((dV, dv[:-1]))
     in_spikes = np.expand_dims(in_spikes, 0)
     out_spikes = np.expand_dims(out_spikes, 1)
     V = np.expand_dims(V, 1)
-    return V, out_spikes, in_spikes, dV[:-1]
+    return V, out_spikes, in_spikes, [dV]
 
 def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest, legend):
     fig, ax = plt.subplots(3)

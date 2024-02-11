@@ -56,15 +56,16 @@ class Fractional_LIF():
 
 
 class Layer():
-    def __init__(self, in_features, out_features, neuron:Fractional_LIF) -> None:
+    def __init__(self, in_features, out_features, start_V, neuron:Fractional_LIF) -> None:
         self.in_features = in_features
         self.out_features = out_features
         self.neuron = neuron
+        self.start_V = start_V
         #self.weights= np.random.rand(in_features, out_features)
         self.weights = np.array([[1]])
         self.M = np.zeros(out_features)
         self.P = np.zeros(in_features)
-        self.V_mem = np.ones(out_features)*neuron.E_L
+        self.V_mem = np.ones(out_features)*start_V
         self.dV = list(np.ones((out_features, 1))*[])
         self.N = np.zeros((out_features), dtype =np.int32)
         self.tr = np.ones((out_features, 1))*neuron.tref
@@ -114,7 +115,7 @@ class SNN():
         df.to_csv(file_name, index=False)
 
     def encoding(self):
-        chain = np.zeros((self.input.shape[0], self.L_time))
+        chain = np.ones((self.input.shape[0], self.L_time))
         input_rate = self.input*self.rate
         for it in range(self.input.shape[0]):
             t=0            
@@ -133,7 +134,7 @@ class SNN():
         return chain
 
     def forward(self):
-        V = np.ones((1, self.classes))*self.layers[0].neuron.E_L
+        V = np.ones((1, self.classes))*self.layers[-1].start_V
         spikes = []
         input_spikes = self.encoding()
         out_spikes = np.zeros((1, self.classes))
@@ -149,7 +150,13 @@ class SNN():
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
                     if self.check and (i+2)%5000 ==0:
-                        self.checkpoints(layer.dV[0][self.dVs[0].shape[0]:], V.T[0], out_spikes.T[0], input_spikes[0], (i+2)//10)
+                        if type(self.dVs)==list:
+                            dV = layer.dV[0][self.dVs[0].shape[0]:]
+                        else:
+                            dV = layer.dV[0]
+                        #print(dV.shape, V.shape, out_spikes.shape, input_spikes[0, :(i+2)].shape)
+                        self.checkpoints(dV, V.T[0], out_spikes.T[0], input_spikes[0, :(i+2)], (i+2)//10)
+
         #Firing rate
         num_spikes = np.sum(out_spikes!=0, axis=0)
         dT = np.max(out_spikes, axis=0)-np.min(out_spikes, axis=0)
