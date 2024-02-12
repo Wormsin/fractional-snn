@@ -71,6 +71,25 @@ def count_ISI(spikes):
     isi = spikes[1:]-spikes[0:-1]
     return isi
 
+def count_acc(input, output, time_step):
+    i=0
+    ones_time_in = []
+    while i<len(input):
+        if input[i]==1:
+            ones_time_in.append(i)
+            i +=int(time_step)
+        else:
+            i+=1
+    ones_time_out = np.where(output!=0)[0]/10
+    ones_time_in = np.array(ones_time_in)/10
+    acc = 0
+    for t in ones_time_in:
+        arr = ones_time_out[ones_time_out>=t]
+        if len(arr) != 0:
+            acc+=np.max((arr-t <= time_step/10)*1)
+    #print(acc,len(ones_time_in))
+    return acc/len(ones_time_in)
+
 def plot_means(means, br_labels, x_labels, xname, yname):
     r, c = means.shape
     barWidth = 0.25

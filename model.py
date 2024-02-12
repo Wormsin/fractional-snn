@@ -103,20 +103,6 @@ class SNN():
         self.check = check
         self.file_name = file_name
 
-    def count_adaptation_time(self, ins, outs, count, cur_time, time_adapt):
-        if ins*outs==1 and count ==0:
-            count+=1
-            time = cur_time
-        elif ins*outs==1 and count!=0:
-            count+=1
-            time = time_adapt
-        elif ins==0 and outs==0:
-            time = time_adapt
-        else:
-            count = 0
-            time = 0
-        return time, count
-
     def checkpoints(self, dV, V, out_spikes, in_spikes):
         dV = np.append(dV, 0)
         data = {
@@ -148,8 +134,6 @@ class SNN():
         return chain
 
     def forward(self):
-        adaptation_time = 0
-        count = 0
         V = np.ones((1, self.classes))*self.layers[-1].start_V
         spikes = []
         input_spikes = self.encoding()
@@ -162,13 +146,12 @@ class SNN():
                     layer.dV = list(np.copy(self.dVs))
                     layer.N = np.ones((layer.out_features), dtype =np.int32)*(len(self.dVs[c]))
                 spikes, v = layer.feed(spikes, self.train)
-                #membrane adaptation
-                adaptation_time, count = self.count_adaptation_time(ins, spikes[0], count, i/10, adaptation_time)
                 if c==len(self.layers)-1:
                     V[-1]=np.where(spikes!=0, self.layers[-1].neuron.V_th, V[-1])
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
-                    if self.check and (i+2)%10000 ==0:
+                    #save data
+                    if self.check and (i+2)%5000 ==0:
                         if type(self.dVs)==list:
                             dV = layer.dV[0][self.dVs[0].shape[0]:]
                         else:
@@ -180,7 +163,6 @@ class SNN():
         num_spikes = np.sum(out_spikes!=0, axis=0)
         dT = np.max(out_spikes, axis=0)-np.min(out_spikes, axis=0)
         dT =np.where(dT!=0, dT, 1)
-        print(adaptation_time, count)
         return input_spikes, (out_spikes!=0)*1, num_spikes/dT, V
 
 
