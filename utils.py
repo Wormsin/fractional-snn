@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import csv
 import os 
 
-def get_csv_data(dir):
+def get_csv_dir_data(dir):
     lst = os.listdir(dir)
     lst = [int(name.split('_')[-1][:-4]) for name in lst]
     indxes = np.argsort(lst)
@@ -30,7 +30,18 @@ def get_csv_data(dir):
     V = np.expand_dims(V, 1)
     return V, out_spikes, in_spikes, [dV]
 
-def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest, legend):
+def get_csv_file_data(file_name):
+    with open(file_name, 'r') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+    data_array = np.array(data)
+    V, out_spikes, in_spikes, dV = data_array[1:, 0].astype(float), data_array[1:, 1].astype(float), data_array[1:, 2].astype(float), data_array[1:, 3].astype(float)
+    in_spikes = np.expand_dims(in_spikes, 0)
+    out_spikes = np.expand_dims(out_spikes, 1)
+    V = np.expand_dims(V, 1)
+    return V, out_spikes, in_spikes, [dV[:-1]]
+
+def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest, legend, title = ""):
     fig, ax = plt.subplots(3)
     for i in range(in_features):
         #ax[0].scatter(range_t[in_spikes[i]!=0], in_spikes[i][in_spikes[i]!=0]*(i+1),  s=0.8)
@@ -59,7 +70,7 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
 
     #ax[0].get_yaxis().set_visible(False)
     ax[1].get_yaxis().set_visible(False)
-
+    plt.title(title)
     nu, step, rate, alfa = legend
     ax[0].set_title(f'input current nA, nu = {nu}, step = {step} ms, rate = {rate}', fontweight ='bold', fontsize = 10, loc = 'left')
     ax[1].set_title('output spikes', fontweight ='bold', fontsize = 10, loc = 'left')
@@ -72,6 +83,7 @@ def count_ISI(spikes):
     return isi
 
 def count_acc(input, output, time_step):
+    #input-=np.min(input)
     i=0
     ones_time_in = []
     while i<len(input):
@@ -89,6 +101,15 @@ def count_acc(input, output, time_step):
             acc+=np.max((arr-t <= time_step/10)*1)
     #print(acc,len(ones_time_in))
     return acc/len(ones_time_in)
+
+def plot_acc(arr, time_interval):
+    plt.plot(np.arange(1, len(arr)+1)*time_interval, arr, 'o')
+    plt.plot([0], [arr[0]], 'o')
+    plt.xlabel("unaccounted periods of time", fontweight ='bold')
+    plt.ylabel('accuracy', fontweight ='bold')
+    plt.title("influence unaccounted dV on accuracy", fontweight ='bold')
+    plt.legend(['partial memory', 'total memory'])
+    plt.show()
 
 def plot_means(means, br_labels, x_labels, xname, yname):
     r, c = means.shape

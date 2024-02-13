@@ -115,7 +115,7 @@ class SNN():
         df.to_csv(self.file_name, index=False)
 
     def encoding(self):
-        chain = np.zeros((self.input.shape[0], self.L_time))
+        chain = np.ones((self.input.shape[0], self.L_time))
         input_rate = self.input*self.rate
         for it in range(self.input.shape[0]):
             t=0            
@@ -151,7 +151,7 @@ class SNN():
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
                     #save data
-                    if self.check and (i+2)%5000 ==0:
+                    if self.check and (i+2)%10000 ==0:
                         if type(self.dVs)==list:
                             dV = layer.dV[0][self.dVs[0].shape[0]:]
                         else:
