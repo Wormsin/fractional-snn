@@ -47,9 +47,10 @@ def make_new_data(epochs):
         i = 0 
         layer1 = m.Layer(1, 1, start_V, neuron)
         snn = m.SNN([layer1], input, Lt, 1, range_t, rate=rate, nu=nu, time_step=time_step, train=False, dVs=0, 
-                    check=True, file_name = f'output_data/data_{int(Lt*dt)}_{i}.csv')
+                    check=True, file_name = f'output_data/data_{int(Lt*dt)}_{i}.csv', period=i)
         in_spikes, out_spikes, out_rate, V = snn.forward()
-        acc = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
+        #acc = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
+        acc = 0
         print(f"{i} accuracy: {acc}")
         i+=1
         while i < epochs and acc < 0.8:
@@ -58,9 +59,9 @@ def make_new_data(epochs):
                 layer1 = m.Layer(1, 1, start_V, neuron)
                 #np.random.seed(12)
                 snn = m.SNN([layer1], input, Lt, 1, range_t, rate=rate, nu=nu, time_step=time_step, 
-                        train=False, dVs=dV, check=True, file_name = f'output_data/data_{int(Lt*dt)}_{i}.csv')
+                        train=False, dVs=dV, check=True, file_name = f'output_data/data_{int(Lt*dt)}_{i}.csv', period=i)
                 in_spikes, out_spikes, out_rate, V = snn.forward()
-                acc = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
+                #acc = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
                 print(f"{i} accuracy: {acc}")
                 i+=1
 
@@ -72,23 +73,23 @@ def add_data(epochs, i):
                 layer1 = m.Layer(1, 1, start_V, neuron)
                 #np.random.seed(12)
                 snn = m.SNN([layer1], input, Lt, 1, range_t, rate=rate, nu=nu, time_step=time_step, 
-                        train=False, dVs=dV, check=True, file_name = f'output_data/data_{int(Lt*dt)}_{i}.csv')
+                        train=False, dVs=dV, check=True, file_name = f'output_data/data_{int(Lt*dt)}_{i}.csv', period = i)
                 in_spikes, out_spikes, out_rate, V = snn.forward()
-                acc = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
+                #acc = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
                 print(f"{i} accuracy: {acc}")
                 i+=1
 
 def instant_view():
         layer1 = m.Layer(1, 1, start_V, neuron)
         snn = m.SNN([layer1], input, Lt, 1, range_t, rate=rate, nu=nu, time_step=time_step, train=False, 
-                    dVs=0, check=False, file_name = f'output_data/data_{int(Lt*dt)}_{0}.csv')
+                    dVs=0, check=False, file_name = f'output_data/data_{int(Lt*dt)}_{0}.csv', period=0)
         in_spikes, out_spikes, out_rate, V = snn.forward()
         utils.plot_spikes(1, 1, in_spikes*Iinj, out_spikes.T, V, range_t, V_th, E_L, legend = [f"{nu}", f"{time_step}", f"{rate}", f"{alfa}"])
-        accuracy = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
-        print(accuracy)
+        #accuracy = utils.count_acc(in_spikes[0], out_spikes[:, 0], time_step/dt)
+        #print(accuracy)
 
 pars = {'V_th': -50.0, 'V_reset': -70.0, 'g_L': 25.0, 'C_m': 500,  'V_init': -70.0, 'E_L': -70.0, 'tref': 5.0, 'dt': 0.1,
-        'tm':5, 'tp':3, 'Ap':0.6, 'Am':-0.3, 'range_t': np.arange(0, 1000, 0.1), 'Iinj': 3, 'lr': 1, 'stdp_rate': 0.0625}
+        'tm':5, 'tp':3, 'Ap':0.6, 'Am':-0.3, 'range_t': np.arange(0, 1000, 0.1), 'Iinj': 3.5, 'lr': 3, 'stdp_rate': 0.0625}
 
 V_th, V_reset = pars['V_th'], pars['V_reset']
 g_L, C_m = pars['g_L'], pars['C_m']
@@ -107,7 +108,7 @@ stdp_rate = pars['stdp_rate']
 start_V = E_L
 time_step = pars['dt']*10
 nu = 1
-rate = 0.08
+rate = 5
 alfa = 0.2
 input = np.array([1])
 neuron = m.Fractional_LIF(V_th, V_reset, E_L, Iinj, g_L, C_m, dt, alfa, tref, stdp_rate, tm, tp, Am, Ap)
@@ -115,10 +116,11 @@ neuron = m.Fractional_LIF(V_th, V_reset, E_L, Iinj, g_L, C_m, dt, alfa, tref, st
 
 
 
-#make_new_data(20)
-#add_data(21, 20)
-plot_file("output_data/data_1000_19.csv", 1000, True)
-
+#make_new_data(8)
+#add_data(26, 25)
+plot_file("plot/data_1000_25_1.csv", 1000, False)
+#plot_folder("plot", 2000, False)
+#instant_view()
 
 
 

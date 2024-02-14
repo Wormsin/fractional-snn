@@ -88,7 +88,7 @@ class Layer():
         return out_spikes, self.V_mem
     
 class SNN():
-    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool, dVs, check:bool, file_name) -> None:
+    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool, dVs, check:bool, file_name, period) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
@@ -102,6 +102,7 @@ class SNN():
         self.dVs = dVs
         self.check = check
         self.file_name = file_name
+        self.period = period
 
     def checkpoints(self, dV, V, out_spikes, in_spikes):
         dV = np.append(dV, 0)
@@ -132,11 +133,18 @@ class SNN():
                     chain[it, t:t+self.t_step]=1
                     t+=self.t_step
         return chain
+    
+    def periodic_signal(self):
+        chain = np.ones((self.input.shape[0], self.L_time))
+        input_rate = self.input*self.rate
+        chain = (np.sin((self.time+self.L_time*self.period*self.dt)/input_rate)+0.5)*chain
+        return chain
 
     def forward(self):
         V = np.ones((1, self.classes))*self.layers[-1].start_V
         spikes = []
-        input_spikes = self.encoding()
+        #input_spikes = self.encoding()
+        input_spikes = self.periodic_signal()
         out_spikes = np.zeros((1, self.classes))
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
@@ -151,7 +159,7 @@ class SNN():
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
                     #save data
-                    if self.check and (i+2)%10000 ==0:
+                    if self.check and (i+2)%self.L_time ==0:
                         if type(self.dVs)==list:
                             dV = layer.dV[0][self.dVs[0].shape[0]:]
                         else:
