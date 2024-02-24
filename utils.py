@@ -83,7 +83,7 @@ def count_ISI(spikes):
     return isi
 
 def count_acc(input, output, time_step):
-    #input-=np.min(input)
+    input-=np.min(input)
     i=0
     ones_time_in = []
     while i<len(input):

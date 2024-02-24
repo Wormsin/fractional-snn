@@ -143,8 +143,8 @@ class SNN():
     def forward(self):
         V = np.ones((1, self.classes))*self.layers[-1].start_V
         spikes = []
-        #input_spikes = self.encoding()
-        input_spikes = self.periodic_signal()
+        input_spikes = self.encoding()
+        #input_spikes = self.periodic_signal()
         out_spikes = np.zeros((1, self.classes))
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
