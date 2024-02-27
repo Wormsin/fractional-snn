@@ -87,7 +87,7 @@ def count_acc(input, output, time_step):
     i=0
     ones_time_in = []
     while i<len(input):
-        if input[i]==1:
+        if input[i]!=0:
             ones_time_in.append(i)
             i +=int(time_step)
         else:
@@ -99,8 +99,9 @@ def count_acc(input, output, time_step):
         arr = ones_time_out[ones_time_out>=t]
         if len(arr) != 0:
             acc+=np.max((arr-t <= time_step/10)*1)
-    #print(acc,len(ones_time_in))
-    return acc/len(ones_time_in)
+    print(acc,len(ones_time_in))
+    #return acc/len(ones_time_in)
+    return acc
 
 def plot_acc(arr, time_interval):
     plt.plot(np.arange(1, len(arr)+1)*time_interval, arr, 'o')

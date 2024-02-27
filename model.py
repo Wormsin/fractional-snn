@@ -130,7 +130,7 @@ class SNN():
                     tau = poisson_tau*levy_tau
                     t+=ceil(tau/self.dt)
                     t = min(self.L_time-1*self.t_step, t)
-                    chain[it, t:t+self.t_step]=1
+                    chain[it, t:t+self.t_step]=0.2
                     t+=self.t_step
         return chain
     
