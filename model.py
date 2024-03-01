@@ -88,14 +88,14 @@ class Layer():
         return out_spikes, self.V_mem
     
 class SNN():
-    def __init__(self, layers:Layer, input, L_time, classes, time_interval, rate, nu, time_step, train: bool, dVs, check:bool, file_name, period) -> None:
+    def __init__(self, layers:Layer, input, L_time, classes, time_interval, N_spk, nu, time_step, train: bool, dVs, check:bool, file_name, period) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
         self.classes = classes
         self.time = time_interval
         self.dt = 0.1
-        self.rate = rate
+        self.N_spk = N_spk
         self.nu = nu
         self.train = train
         self.t_step = int(time_step*10)
@@ -106,18 +106,28 @@ class SNN():
 
     def checkpoints(self, dV, V, out_spikes, in_spikes):
         dV = np.append(dV, 0)
-        data = {
+        data_main = {
             'V': V,
             'out_spikes': out_spikes,
-            'in_spikes': in_spikes,
+            'in_spikes': in_spikes*self.layers[0].neuron.spk_amp,
             'dV': dV
         }
+        data = {
+            'prop': [self.L_time*self.dt,
+            self.nu,
+            self.t_step,
+            self.N_spk,
+            self.layers[-1].neuron.alfa]
+        }
         df = pd.DataFrame(data)
-        df.to_csv(self.file_name, index=False)
+        df_main = pd.DataFrame(data_main)
+        merged_data = pd.concat([df_main,df], ignore_index=True, axis=1)
+        merged_data.to_csv(self.file_name, index=False)
 
     def encoding(self):
+        rate = gamma(self.nu+1)*self.N_spk/(self.L_time**self.nu)
         chain = np.ones((self.input.shape[0], self.L_time))
-        input_rate = self.input*self.rate
+        input_rate = self.input*rate
         for it in range(self.input.shape[0]):
             t=0            
             for i in range(self.L_time):
@@ -130,13 +140,14 @@ class SNN():
                     tau = poisson_tau*levy_tau
                     t+=ceil(tau/self.dt)
                     t = min(self.L_time-1*self.t_step, t)
-                    chain[it, t:t+self.t_step]=0.2
+                    chain[it, t:t+self.t_step]=2
                     t+=self.t_step
         return chain
     
     def periodic_signal(self):
+        rate = gamma(self.nu+1)*self.N_spk/(self.L_time**self.nu)
         chain = np.ones((self.input.shape[0], self.L_time))
-        input_rate = self.input*self.rate
+        input_rate = self.input*rate
         chain = (np.sin((self.time+self.L_time*self.period*self.dt)/input_rate)+0.5)*chain
         return chain
 
