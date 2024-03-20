@@ -51,7 +51,7 @@ class Fractional_LIF():
         P = P + spike[ind_w]*self.A_plus - P*self.dt/self.t_p
         dw_m = self.lr*M*weights*spikes
         dw_p = self.lr*P*weights*out_spk
-        weights += np.where(dw_m>0, dw_m, 0)  + np.where(dw_p<1, dw_p, 1)
+        weights += np.where(dw_m>0, 0, dw_m)  + np.where(dw_p>1, 1, dw_p)
         return P, M, weights
 
 
@@ -62,7 +62,7 @@ class Layer():
         self.neuron = neuron
         self.start_V = start_V
         #self.weights= np.random.rand(in_features, out_features)
-        self.weights = np.array([[1]])
+        self.weights = np.ones((in_features, out_features))
         self.M = np.zeros(out_features)
         self.P = np.zeros(in_features)
         self.V_mem = np.ones(out_features)*start_V
@@ -82,19 +82,19 @@ class Layer():
             out_spk, self.V_mem[i], self.tr[i]= self.neuron.mem_dynamics(self.V_mem[i], self.dV[i][0:self.N[i]-1], self.tr[i], self.N[i], i_pulse)
             v_new = self.V_mem[i]
             self.calc_dV(v_old, v_new, i)
-            if train:
+            if train and np.max(spikes)!=0:
                 self.P[i], self.M[i], self.weights[:, i]=self.neuron.stdp(self.P[i], self.M[i], self.weights[:, i], out_spk, spikes)
             out_spikes[i] = out_spk
         return out_spikes, self.V_mem
     
-class SNN():
-    def __init__(self, layers:Layer, input, L_time, classes, time_interval, N_spk, nu, time_step, train: bool, dVs, check:bool, file_name, period) -> None:
+class FC():
+    def __init__(self, layers:Layer, input, L_time, classes, N_spk, nu, time_step, train: bool, dVs, check:bool, file_name = '', period = 0) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
         self.classes = classes
-        self.time = time_interval
         self.dt = 0.1
+        self.time = np.arange(0, L_time, self.dt)
         self.N_spk = N_spk
         self.nu = nu
         self.train = train
@@ -109,24 +109,30 @@ class SNN():
         data_main = {
             'V': V,
             'out_spikes': out_spikes,
-            'in_spikes': in_spikes*self.layers[0].neuron.spk_amp,
             'dV': dV
         }
-        data = {
-            'prop': [self.L_time*self.dt,
-            self.nu,
+        for i in range(len(self.input)):
+            data_main[f'in_spikes{i}'] =  in_spikes[i]*self.layers[0].neuron.spk_amp
+        data_prop = {
+            'prop': [
+            self.L_time*self.dt,
             self.t_step,
             self.N_spk,
-            self.layers[-1].neuron.alfa]
+            self.layers[-1].neuron.alfa,
+            len(self.input)]
         }
-        df = pd.DataFrame(data)
+        data_input = {
+            'nu' : self.nu
+        }
+        df_input = pd.DataFrame(data_input)
+        df_prop = pd.DataFrame(data_prop)
         df_main = pd.DataFrame(data_main)
-        merged_data = pd.concat([df_main,df], ignore_index=True, axis=1)
+        merged_data = pd.concat([df_prop, df_input, df_main], ignore_index=True, axis=1)
         merged_data.to_csv(self.file_name, index=False)
 
     def encoding(self):
         rate = gamma(self.nu+1)*self.N_spk/(self.L_time**self.nu)
-        chain = np.ones((self.input.shape[0], self.L_time))
+        chain = np.zeros((self.input.shape[0], self.L_time))
         input_rate = self.input*rate
         for it in range(self.input.shape[0]):
             t=0            
@@ -135,12 +141,12 @@ class SNN():
                     U1 = uniform()
                     U2 = uniform()
                     U3 = uniform()
-                    poisson_tau = ((-np.log(U1))**(1/self.nu))/(input_rate[it]**(1/self.nu))
-                    levy_tau = np.sin(self.nu*np.pi*U2)*((np.sin((1-self.nu)*np.pi*U2))**(1/self.nu-1))/(((np.sin(np.pi*U2))**(1/self.nu))*((-np.log(U3))**(1/self.nu-1)))
+                    poisson_tau = ((-np.log(U1))**(1/self.nu[it]))/(input_rate[it]**(1/self.nu[it]))
+                    levy_tau = np.sin(self.nu[it]*np.pi*U2)*((np.sin((1-self.nu[it])*np.pi*U2))**(1/self.nu[it]-1))/(((np.sin(np.pi*U2))**(1/self.nu[it]))*((-np.log(U3))**(1/self.nu[it]-1)))
                     tau = poisson_tau*levy_tau
                     t+=ceil(tau/self.dt)
                     t = min(self.L_time-1*self.t_step, t)
-                    chain[it, t:t+self.t_step]=2
+                    chain[it, t:t+self.t_step]=1
                     t+=self.t_step
         return chain
     
@@ -159,7 +165,6 @@ class SNN():
         out_spikes = np.zeros((1, self.classes))
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
-            ins = spikes[0]
             for c, layer in enumerate(self.layers):
                 if i==0 and type(self.dVs)==list:
                     layer.dV = list(np.copy(self.dVs))
@@ -176,12 +181,9 @@ class SNN():
                         else:
                             dV = layer.dV[0]
                         #print(dV.shape, V.shape, out_spikes.shape, input_spikes[0, :(i+2)].shape)
-                        self.checkpoints(dV, V.T[0], out_spikes.T[0], input_spikes[0, :(i+2)])
+                        print(self.layers[-1].weights)
+                        self.checkpoints(dV, V.T[0], out_spikes.T[0], input_spikes[0:, :(i+2)])
 
-        #Firing rate
-        num_spikes = np.sum(out_spikes!=0, axis=0)
-        dT = np.max(out_spikes, axis=0)-np.min(out_spikes, axis=0)
-        dT =np.where(dT!=0, dT, 1)
-        return input_spikes, (out_spikes!=0)*1, num_spikes/dT, V
+        return input_spikes, (out_spikes!=0)*1, V
 
 
