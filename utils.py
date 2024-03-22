@@ -99,6 +99,57 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     ax[2].set_xlabel('time, ms', fontweight ='bold', fontsize = 11)
     plt.show()
 
+def make_plot_voltage_memory_trace_mean(ax, dir):
+    _, _, _, dV, prop, nu = get_csv_dir_data(dir)
+    dV = dV[0]
+    time, _, _, alfa, _ = prop
+    WMT = []
+    range_t = np.arange(2, int(len(dV)+2))
+    voltage_memory_trace = 0
+    total = 0
+    for N in np.arange(2, int(len(dV)+2)):
+        if N%time !=0:
+            k = np.arange(0, N-1)
+            W = (N-k)**(1-alfa)-(N-1-k)**(1-alfa)
+            voltage_memory_trace += dV[:N-1]@W.T
+            total+=1
+        else:
+            WMT.append(voltage_memory_trace/total)
+            voltage_memory_trace = 0
+            total = 0
+    ax.plot(range_t[range_t%time==0]/10000, WMT, linewidth = 3, label = f'nu = {nu}')
+    ax.grid(True,which='major',axis='both',alpha=0.3)
+    ax.set_title(f'альфа = {alfa}', fontweight = 'bold', size = 10)
+    ax.set_xlabel('время, с', fontweight = 'bold', size = 10)
+    ax.set_ylabel('траектория пямяти, мВ', fontweight = 'bold', size = 10)
+    return ax
+
+def make_plot_voltage_memory_trace(ax, dir):
+    _, _, _, dV, prop, nu = get_csv_dir_data(dir)
+    dV = dV[0]
+    time, _, _, alfa, _ = prop
+    WMT = []
+    range_t = np.arange(2, int(len(dV)+2))
+    for N in np.arange(2, int(len(dV)+2)):
+        k = np.arange(0, N-1)
+        W = (N-k)**(1-alfa)-(N-1-k)**(1-alfa)
+        voltage_memory_trace = dV[:N-1]@W.T
+        WMT.append(voltage_memory_trace)
+    ax.plot(range_t/10000, WMT, linewidth = 3, label = f'nu = {nu}')
+    ax.grid(True,which='major',axis='both',alpha=0.3)
+    ax.set_title(f'альфа = {alfa}', fontweight = 'bold', size = 10)
+    ax.set_xlabel('время, с', fontweight = 'bold', size = 10)
+    ax.set_ylabel('траектория пямяти, мВ', fontweight = 'bold', size = 10)
+    return ax
+
+
+def plot_voltage_memory_trace(dirs):
+    ax = a4_plot()
+    for dir in dirs:
+        ax = make_plot_voltage_memory_trace(ax, dir)
+    plt.legend()
+    plt.show()
+
 def ISI_plot(ax, folder, t0, size_fac, nu_extr):
     file_names = os.listdir(folder)
     #ax = a4_plot()

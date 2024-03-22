@@ -98,7 +98,7 @@ class FC():
         self.N_spk = N_spk
         self.nu = nu
         self.train = train
-        self.t_step = int(time_step*10)
+        self.t_step = int(time_step/self.dt)
         self.dVs = dVs
         self.check = check
         self.file_name = file_name
@@ -116,7 +116,7 @@ class FC():
         data_prop = {
             'prop': [
             self.L_time*self.dt,
-            self.t_step,
+            self.t_step*self.dt,
             self.N_spk,
             self.layers[-1].neuron.alfa,
             len(self.input)]
