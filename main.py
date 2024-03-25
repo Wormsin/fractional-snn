@@ -1,5 +1,5 @@
 import utils
-import func
+import proc
 import model as m
 import numpy as np
 import os
@@ -35,15 +35,15 @@ alfa = 0.4
 N = Lt//(4*time_step)
 input = np.array([1])
 neuron = m.Fractional_LIF(V_th, V_reset, E_L, Iinj, g_L, C_m, dt, alfa, tref, stdp_rate, tm, tp, Am, Ap)
-proc = func.Process(V_th, E_L, dt, Lt, range_t, N, nu, time_step, Iinj, alfa, num_inputs, input, neuron)
+proc = proc.Process(V_th, E_L, dt, Lt, range_t, N, nu, time_step, Iinj, alfa, num_inputs, input, neuron)
 
-#proc.instant_view()
+proc.instant_view()
 
 #proc.make_new_data(5)
-#proc.add_data(5, 3)
+#proc.add_data(5, 4)
 
-#proc.plot_file("output_data/data_1.csv", False)
-proc.plot_folder("output_data", False)
+#proc.plot_file("plot/data_4.csv", False)
+#proc.plot_folder("output_data", False)
 #proc.plot_files('output_data')
 
 #utils.plot_voltage_memory_trace(["04_04","04_06", "04_08", "04_1", "output_data"])

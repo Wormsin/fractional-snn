@@ -2,6 +2,7 @@ import os
 import numpy as np
 import utils
 import model as m 
+from save import save_one_neuron_exp
 
 class Process():
     def __init__(self, V_th, E_L, dt, Lt, range_t, N, nu, time_step, Iinj, alfa, num_inputs, input, neuron) -> None:
@@ -69,8 +70,10 @@ class Process():
             layer1 = m.Layer(self.in_features, 1, start_V, self.neuron)
             #np.random.seed(1)
             snn = m.FC([layer1], self.input, self.Lt, 1, N_spk=self.N, nu=self.nu, time_step=self.time_step, train=False, dVs=0, 
-                        check=True, file_name = f'output_data/data_{i}.csv', period=i)
-            in_spikes, out_spikes, V = snn.forward()
+                        check=True, period=i)
+            in_spikes, out_spikes, V, dV = snn.forward()
+            save_one_neuron_exp(file_name=f'output_data/data_{i}.csv', dV=dV, V=V, out_spikes=out_spikes, in_spikes=in_spikes, input=self.input,
+                                spk_amp=self.neuron.spk_amp, L_time=self.Lt, dt = self.dt, t_step=self.time_step, N_spk=self.N, alfa=self.alfa, nu = self.nu)
             i+=1
             while i < epochs:
                     V, _, _, dV, _, _ = utils.get_csv_dir_data("output_data")
@@ -78,8 +81,10 @@ class Process():
                     layer1 = m.Layer(self.in_features, 1, start_V, self.neuron)
                     #np.random.seed(1)
                     snn = m.FC([layer1], self.input, self.Lt, 1, N_spk=self.N, nu=self.nu, time_step=self.time_step, 
-                            train=False, dVs=dV, check=True, file_name = f'output_data/data_{i}.csv', period=i)
-                    in_spikes, out_spikes, V = snn.forward()
+                            train=False, dVs=dV, check=True, period=i)
+                    in_spikes, out_spikes, V, dV = snn.forward()
+                    save_one_neuron_exp(file_name=f'output_data/data_{i}.csv', dV=dV, V=V, out_spikes=out_spikes, in_spikes=in_spikes, input=self.input,
+                                spk_amp=self.neuron.spk_amp, L_time=self.Lt, dt = self.dt, t_step=self.time_step, N_spk=self.N, alfa=self.alfa, nu = self.nu)
                     i+=1
 
     def add_data(self, epochs, i):
@@ -89,8 +94,10 @@ class Process():
                     layer1 = m.Layer(self.in_features, 1, start_V, self.neuron)
                     #np.random.seed(12)
                     snn = m.FC([layer1], self.input, self.Lt, 1, N_spk=self.N, nu=self.nu, time_step=self.time_step, 
-                            train=False, dVs=dV, check=True, file_name = f'output_data/data_{i}.csv', period = i)
-                    in_spikes, out_spikes, V = snn.forward()
+                            train=False, dVs=dV, check=True, period = i)
+                    in_spikes, out_spikes, V, dV = snn.forward()
+                    save_one_neuron_exp(file_name=f'output_data/data_{i}.csv', dV=dV, V=V, out_spikes=out_spikes, in_spikes=in_spikes, input=self.input,
+                                spk_amp=self.neuron.spk_amp, L_time=self.Lt, dt = self.dt, t_step=self.time_step, N_spk=self.N, alfa=self.alfa, nu = self.nu)
                     i+=1
 
     def instant_view(self):
@@ -98,7 +105,7 @@ class Process():
             start_V = self.E_L
             layer1 = m.Layer(self.in_features, 1, start_V, self.neuron)
             snn = m.FC([layer1], self.input, self.Lt, 1, N_spk=self.N, nu=self.nu, time_step=self.time_step, train=False, 
-                        dVs=0, check=False, file_name = f'output_data/data_{0}.csv', period=0)
+                        dVs=0, check=False, period=0)
             in_spikes, out_spikes, V = snn.forward()
             utils.plot_spikes(self.in_features, 1, in_spikes*self.Iinj, out_spikes.T, V, self.range_t, self.V_th, self.E_L, 
                               legend = [self.nu, f"{self.time_step}", f"{self.N}", f"{self.alfa}", f"{self.Iinj}"])

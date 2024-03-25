@@ -2,7 +2,6 @@ import numpy as np
 from scipy.special import gamma 
 from math import ceil
 from numpy.random import uniform
-import pandas as pd
 
 class Fractional_LIF():
     def __init__(self, V_th, V_reset, E_L, spk_amp, g_L, C_m, dt, alfa, tref, stdp_rate, stdp_tm, stdp_tp, stdp_Aminus, stdp_Aplus) -> None:
@@ -88,7 +87,7 @@ class Layer():
         return out_spikes, self.V_mem
     
 class FC():
-    def __init__(self, layers:Layer, input, L_time, classes, N_spk, nu, time_step, train: bool, dVs, check:bool, file_name = '', period = 0) -> None:
+    def __init__(self, layers:Layer, input, L_time, classes, N_spk, nu, time_step, train: bool, dVs, check:bool,  period = 0) -> None:
         self.layers = layers
         self.input = input
         self.L_time = L_time 
@@ -101,34 +100,7 @@ class FC():
         self.t_step = int(time_step/self.dt)
         self.dVs = dVs
         self.check = check
-        self.file_name = file_name
         self.period = period
-
-    def checkpoints(self, dV, V, out_spikes, in_spikes):
-        dV = np.append(dV, 0)
-        data_main = {
-            'V': V,
-            'out_spikes': out_spikes,
-            'dV': dV
-        }
-        for i in range(len(self.input)):
-            data_main[f'in_spikes{i}'] =  in_spikes[i]*self.layers[0].neuron.spk_amp
-        data_prop = {
-            'prop': [
-            self.L_time*self.dt,
-            self.t_step*self.dt,
-            self.N_spk,
-            self.layers[-1].neuron.alfa,
-            len(self.input)]
-        }
-        data_input = {
-            'nu' : self.nu
-        }
-        df_input = pd.DataFrame(data_input)
-        df_prop = pd.DataFrame(data_prop)
-        df_main = pd.DataFrame(data_main)
-        merged_data = pd.concat([df_prop, df_input, df_main], ignore_index=True, axis=1)
-        merged_data.to_csv(self.file_name, index=False)
 
     def encoding(self):
         rate = gamma(self.nu+1)*self.N_spk/(self.L_time**self.nu)
@@ -174,16 +146,13 @@ class FC():
                     V[-1]=np.where(spikes!=0, self.layers[-1].neuron.V_th, V[-1])
                     V = np.concatenate((V, v.reshape(1, self.classes)))
                     out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
-                    #save data
-                    if self.check and (i+2)%self.L_time ==0:
-                        if type(self.dVs)==list:
-                            dV = layer.dV[0][self.dVs[0].shape[0]:]
-                        else:
-                            dV = layer.dV[0]
-                        #print(dV.shape, V.shape, out_spikes.shape, input_spikes[0, :(i+2)].shape)
-                        print(self.layers[-1].weights)
-                        self.checkpoints(dV, V.T[0], out_spikes.T[0], input_spikes[0:, :(i+2)])
-
-        return input_spikes, (out_spikes!=0)*1, V
+        if type(self.dVs)==list:
+            dV = layer.dV[0][self.dVs[0].shape[0]:]
+        elif self.check and type(self.dVs)!=list:
+            dV = layer.dV[0]
+        if self.check:
+            return input_spikes, (out_spikes!=0)*1, V, dV
+        else:
+            return input_spikes, (out_spikes!=0)*1, V
 
 
