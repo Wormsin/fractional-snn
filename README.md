@@ -1,5 +1,7 @@
-<img src = "https://github.com/Wormsin/fractional-snn/assets/142012648/cc7e4c98-3417-468f-b96e-7ed672fb632f" width="442" height="252">
-<img src = "https://github.com/Wormsin/fractional-snn/assets/142012648/24d818ff-feb3-4ad1-b506-401ed0f206cd" width="442" height="252">
+<p align="center">
+  <img src = "https://github.com/Wormsin/fractional-snn/assets/142012648/cc7e4c98-3417-468f-b96e-7ed672fb632f" width="442" height="252">
+  <img src = "https://github.com/Wormsin/fractional-snn/assets/142012648/24d818ff-feb3-4ad1-b506-401ed0f206cd" width="442" height="252">
+</p>
 
 # Fractional order Leaky Integrate-and-Fire Neuron Model
 This project implements processing of intermittent spike trains by fractional leaky integrate-and-fire neural model. \
