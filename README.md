@@ -3,13 +3,13 @@
   <img src = "https://github.com/Wormsin/fractional-snn/assets/142012648/24d818ff-feb3-4ad1-b506-401ed0f206cd" width="442" height="252">
 </p>
 
-# Fractional order Leaky Integrate-and-Fire Neuron Model
+# Fractional order Leaky Integrate-and-Fire Neuron Model and Intermittent spikes
 This project implements processing of intermittent spike trains by fractional leaky integrate-and-fire neural model. \
 Thus the input data is encoded with a fractional Poisson distribution with a long-term memory parameter **nu**.
 ## model.py 
 This code implements a fully connected neural network. You can configure an arbitrary number of layers. The fractional differential equation is simplified according to the L1 scheme. 
 ## main.py
-**proc.py** is made for experiments on _one_ neuron with several inputs. \
+**proc.py** is made for experiments on _one_ neuron with several inputs.
 
 Create and save new data in the folder "output_data". \
 **epochs** are the number of experiments with a given observation time that are dependent on each other.
