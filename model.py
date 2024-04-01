@@ -41,39 +41,40 @@ class Fractional_LIF():
             v=self.V_reset
         return spk*1, v, tr
     
-    def stdp(self, P, M, weights, out_spk, spikes):
-        ind_w = np.argmax(weights*spikes)
-        spike = spikes*0
+    def stdp(self, P, M, weights, out_spk, in_spk):
+        weights = weights[:, 0]
+        ind_w = np.argmax(weights*in_spk)
+        spike = np.zeros(weights.shape)
         spike[ind_w] = 1
-        spike = spike*spikes
         M = M + out_spk*self.A_minus - M*self.dt/self.t_m
-        P = P + spike[ind_w]*self.A_plus - P*self.dt/self.t_p
-        dw_m = self.lr*M*weights*spikes
+        P = P +  spike*self.A_plus - P*self.dt/self.t_p
+        dw_m = self.lr*M*weights*in_spk*spike
         dw_p = self.lr*P*weights*out_spk
-        weights += np.where(dw_m>0, 0, dw_m)  + np.where(dw_p>1, 1, dw_p)
+        weights += np.where(weights+dw_m>-1, dw_m, -1)  + np.where(weights+dw_p<=1, dw_p, 0)
+        weights = np.expand_dims(weights, 1)
         return P, M, weights
 
 
 class Layer():
-    def __init__(self, in_features, out_features, start_V, neuron:Fractional_LIF) -> None:
+    def __init__(self, in_features, out_features, weights, start_V, neuron:Fractional_LIF) -> None:
         self.in_features = in_features
         self.out_features = out_features
         self.neuron = neuron
         self.start_V = start_V
-        #self.weights= np.random.rand(in_features, out_features)
-        self.weights = np.ones((in_features, out_features))
+        self.weights = weights
         self.M = np.zeros(out_features)
         self.P = np.zeros(in_features)
         self.V_mem = np.ones(out_features)*start_V
         self.dV = list(np.ones((out_features, 1))*[])
         self.N = np.zeros((out_features), dtype =np.int32)
         self.tr = np.ones((out_features, 1))*neuron.tref
+        self.out_spikes = np.zeros((out_features))
+        self.pre_spikes = np.zeros((in_features))
     
     def calc_dV(self, v_old, v_new, i):
         self.dV[i] = np.append(self.dV[i], v_new-v_old)
 
-    def feed(self, spikes, train):
-        out_spikes = np.empty(self.out_features)
+    def feed(self, spikes):
         self.N+=1
         for i in range(self.out_features):
             i_pulse = max((spikes*self.neuron.spk_amp)*self.weights[:, i].T)*1000
@@ -81,10 +82,8 @@ class Layer():
             out_spk, self.V_mem[i], self.tr[i]= self.neuron.mem_dynamics(self.V_mem[i], self.dV[i][0:self.N[i]-1], self.tr[i], self.N[i], i_pulse)
             v_new = self.V_mem[i]
             self.calc_dV(v_old, v_new, i)
-            if train and np.max(spikes)!=0:
-                self.P[i], self.M[i], self.weights[:, i]=self.neuron.stdp(self.P[i], self.M[i], self.weights[:, i], out_spk, spikes)
-            out_spikes[i] = out_spk
-        return out_spikes, self.V_mem
+            self.out_spikes[i] = out_spk
+        return self.out_spikes, self.V_mem
     
 class FC():
     def __init__(self, layers:Layer, input, L_time, classes, N_spk, nu, time_step, train: bool, dVs, check:bool,  period = 0) -> None:
@@ -138,10 +137,15 @@ class FC():
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
             for c, layer in enumerate(self.layers):
+                if i==self.L_time-2:
+                    weights = layer.weights
                 if i==0 and type(self.dVs)==list:
                     layer.dV = list(np.copy(self.dVs))
                     layer.N = np.ones((layer.out_features), dtype =np.int32)*(len(self.dVs[c]))
-                spikes, v = layer.feed(spikes, self.train)
+                spikes, v = layer.feed(spikes)
+                #stdp
+                if self.train:
+                    layer.P, layer.M, layer.weights=layer.neuron.stdp(layer.P, layer.M, layer.weights, spikes, input_spikes[:, i])
                 if c==len(self.layers)-1:
                     V[-1]=np.where(spikes!=0, self.layers[-1].neuron.V_th, V[-1])
                     V = np.concatenate((V, v.reshape(1, self.classes)))
@@ -151,7 +155,7 @@ class FC():
         elif self.check and type(self.dVs)!=list:
             dV = layer.dV[0]
         if self.check:
-            return input_spikes, (out_spikes!=0)*1, V, dV
+            return input_spikes, (out_spikes!=0)*1, V, dV, weights
         else:
             return input_spikes, (out_spikes!=0)*1, V
 

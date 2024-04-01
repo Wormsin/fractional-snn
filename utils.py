@@ -19,8 +19,9 @@ def get_csv_dir_data(dir):
         prop = data_array[1:6, 0].astype(float)
         num_inputs = prop[-1]
         nu = data_array[1:int(num_inputs+1), 1].astype(float)
-        v, out_s, dv = data_array[1:, 2].astype(float), data_array[1:, 3].astype(float), data_array[1:, 4].astype(float)
-        in_s = data_array[1:, 5:].astype(float)
+        weights = data_array[1:int(num_inputs+1), 2].astype(float)
+        v, out_s, dv = data_array[1:, 3].astype(float), data_array[1:, 4].astype(float), data_array[1:, 5].astype(float)
+        in_s = data_array[1:, 6:].astype(float)
         in_s = in_s.T
         if i ==0:
             V = v
@@ -34,9 +35,10 @@ def get_csv_dir_data(dir):
             dV = np.concatenate((dV, dv[:-1]))
     out_spikes = np.expand_dims(out_spikes, 1)
     V = np.expand_dims(V, 1)
+    weights = np.expand_dims(weights, 1)
     prop[0]*=len(file_names)
     prop[2]*=len(file_names)
-    return V, out_spikes, in_spikes, [dV], prop, nu
+    return V, out_spikes, in_spikes, [dV], prop, nu, weights
 
 def get_csv_file_data(file_name):
     with open(file_name, 'r') as f:
@@ -46,12 +48,14 @@ def get_csv_file_data(file_name):
     prop = data_array[1:6, 0].astype(float)
     num_inputs = prop[-1]
     nu = data_array[1:int(num_inputs+1), 1].astype(float)
-    V, out_spikes, dV = data_array[1:, 2].astype(float), data_array[1:, 3].astype(float), data_array[1:, 4].astype(float)
-    in_spikes = data_array[1:, 5:].astype(float)
+    weights = data_array[1:int(num_inputs+1), 2].astype(float)
+    V, out_spikes, dV = data_array[1:, 3].astype(float), data_array[1:, 4].astype(float), data_array[1:, 5].astype(float)
+    in_spikes = data_array[1:, 6:].astype(float)
     in_spikes = in_spikes.T
     out_spikes = np.expand_dims(out_spikes, 1)
     V = np.expand_dims(V, 1)
-    return V, out_spikes, in_spikes, [dV[:-1]], prop, nu
+    weights = np.expand_dims(weights, 1)
+    return V, out_spikes, in_spikes, [dV[:-1]], prop, nu, weights
 
 def a4_plot():
     mpl.rcParams['pdf.fonttype'] = 42
@@ -98,6 +102,39 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     ax[1].set_title('output spikes', fontweight ='bold', fontsize = 11, loc = 'left')
     ax[2].set_title(f'output neuron membrane potential, alfa = {alfa}', fontweight ='bold', fontsize = 11, loc='left')
     ax[2].set_xlabel('time, ms', fontweight ='bold', fontsize = 11)
+    plt.show()
+
+def weight_dynamic(dir):
+    lst = os.listdir(dir)
+    lst = [int(name.split('_')[-1][:-4]) for name in lst]
+    indxes = np.argsort(lst)
+    file_names = os.listdir(dir)
+    for i, indx in enumerate(indxes):
+        file_name = file_names[indx]
+        with open(os.path.join(dir, file_name), 'r') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+        data_array = np.array(data)
+        prop = data_array[1:6, 0].astype(float)
+        num_inputs = prop[-1]
+        weights = data_array[1:int(num_inputs+1), 2].astype(float)
+        if i ==0:
+            W = weights.reshape((2, 1))
+        else:
+            W= np.concatenate((W, weights.reshape((2, 1))), axis=1)
+    return W
+
+def plot_weights(dir, L, nu, alfa):
+    weights = weight_dynamic(dir=dir)
+    print(weights)
+    ax = a4_plot()
+    ax.plot(np.arange(L), weights[0], linewidth = 3, label = f'nu = {nu[0]}')
+    ax.plot(np.arange(L), weights[1], linewidth = 3, label = f'nu = {nu[1]}')
+    ax.grid(True,which='major',axis='both',alpha=0.3)
+    ax.set_title(f'альфа = {alfa}', fontweight = 'bold', size = 11)
+    ax.set_xlabel('время, с', fontweight = 'bold', size = 11)
+    ax.set_ylabel('синаптический вес', fontweight = 'bold', size = 11)
+    plt.legend()
     plt.show()
 
 def make_plot_voltage_memory_trace_mean(ax, dir):

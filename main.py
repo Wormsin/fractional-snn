@@ -23,8 +23,8 @@ stdp_rate = pars['stdp_rate']
 
 start_V = E_L
 time_step = 0.1 # ms
-nu = np.array([0.6, 0.2])
-alfa = 0.2
+nu = np.array([0.2, 0.6])
+alfa = 0.5
 N = range_t[-1]//(time_step)
 input = np.array([1, 1])
 num_inputs = len(input)
@@ -32,20 +32,20 @@ neuron = m.Fractional_LIF(V_th, V_reset, E_L, Iinj, g_L, C_m, dt, alfa, tref, st
 proc = proc.Process(V_th, E_L, dt, Lt, range_t, N, nu, time_step, Iinj, alfa, num_inputs, input, neuron)
 
 #proc.instant_view()
+#proc.make_new_data(10, True)
+#proc.add_data(20, 10, True)
 
-#proc.make_new_data(4)
-#proc.add_data(10, 4)
-
-#proc.plot_file("output_data/data_3.csv", False)
-#proc.plot_folder("output_data", False)
+#proc.plot_file("output_data/data_0.csv", False)
+proc.plot_folder("output_data", False)
 #proc.plot_files('output_data')
 
 #utils.plot_voltage_memory_trace(["vmt/nu09/05","vmt/nu09/09"])
-
-
+#utils.plot_weights(dir="output_data", L = 10, nu = nu, alfa=alfa)
+'''
 ax = utils.a4_plot()
 ax = utils.ISI_plot(ax, ["output_data"], 10, 3000, 0)
 #ax = utils.ISI_plot(ax, "08_02_1", 4, 1500, 0.5)
 #utils.ISI_plot(ax, "plot", 8, 1500, 1)
 plt.legend()
 plt.show()
+'''

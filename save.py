@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 
-def save_one_neuron_exp(file_name, dV, V, out_spikes, in_spikes, input, spk_amp, L_time, dt, t_step, N_spk, alfa, nu):
+def save_one_neuron_exp(file_name, dV, V, out_spikes, in_spikes, input, spk_amp, L_time, dt, t_step, N_spk, alfa, nu, weights):
         V = V.T[0]
         out_spikes = out_spikes.T[0]
         dV = np.append(dV, 0)
+        weights = weights.reshape((len(input)))
         data_main = {
             'V': V,
             'out_spikes': out_spikes,
@@ -21,7 +22,8 @@ def save_one_neuron_exp(file_name, dV, V, out_spikes, in_spikes, input, spk_amp,
             len(input)]
         }
         data_input = {
-            'nu' : nu
+            'nu' : nu,
+            'weights' : weights
         }
         df_input = pd.DataFrame(data_input)
         df_prop = pd.DataFrame(data_prop)
