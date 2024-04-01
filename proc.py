@@ -101,12 +101,13 @@ class Process():
                     i+=1
 
     def instant_view(self):
-            #np.random.seed(1)
+            #np.random.seed(12)
             start_V = self.E_L
             layer1 = m.Layer(self.in_features, 1, start_V, self.neuron)
             snn = m.FC([layer1], self.input, self.Lt, 1, N_spk=self.N, nu=self.nu, time_step=self.time_step, train=False, 
                         dVs=0, check=False, period=0)
             in_spikes, out_spikes, V = snn.forward()
+            print(in_spikes[in_spikes==1].shape)
             utils.plot_spikes(self.in_features, 1, in_spikes*self.Iinj, out_spikes.T, V, self.range_t, self.V_th, self.E_L, 
                               legend = [self.nu, f"{self.time_step}", f"{self.N}", f"{self.alfa}", f"{self.Iinj}"])
             #accuracy = utils.count_acc(in_spikes[0], out_spikes[:, 0], self.time_step/self.dt)

@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import csv
-import os 
+import os
+from scipy.optimize import curve_fit
 
 def get_csv_dir_data(dir):
     lst = os.listdir(dir)
@@ -108,7 +109,7 @@ def make_plot_voltage_memory_trace_mean(ax, dir):
     voltage_memory_trace = 0
     total = 0
     for N in np.arange(2, int(len(dV)+2)):
-        if N%time !=0:
+        if N%(time) !=0:
             k = np.arange(0, N-1)
             W = (N-k)**(1-alfa)-(N-1-k)**(1-alfa)
             voltage_memory_trace += dV[:N-1]@W.T
@@ -117,11 +118,11 @@ def make_plot_voltage_memory_trace_mean(ax, dir):
             WMT.append(voltage_memory_trace/total)
             voltage_memory_trace = 0
             total = 0
-    ax.plot(range_t[range_t%time==0]/10000, WMT, linewidth = 3, label = f'nu = {nu}')
+    ax.plot(range_t[range_t%(time)==0]/10000, WMT, linewidth = 3, label = f'alpha = {alfa}')
     ax.grid(True,which='major',axis='both',alpha=0.3)
-    ax.set_title(f'альфа = {alfa}', fontweight = 'bold', size = 10)
-    ax.set_xlabel('время, с', fontweight = 'bold', size = 10)
-    ax.set_ylabel('траектория пямяти, мВ', fontweight = 'bold', size = 10)
+    ax.set_title(f'ню = {nu}', fontweight = 'bold', size = 11)
+    ax.set_xlabel('время, с', fontweight = 'bold', size = 11)
+    ax.set_ylabel('траектория пямяти, мВ', fontweight = 'bold', size = 11)
     return ax
 
 def make_plot_voltage_memory_trace(ax, dir):
@@ -146,35 +147,35 @@ def make_plot_voltage_memory_trace(ax, dir):
 def plot_voltage_memory_trace(dirs):
     ax = a4_plot()
     for dir in dirs:
-        ax = make_plot_voltage_memory_trace(ax, dir)
+        ax = make_plot_voltage_memory_trace_mean(ax, dir)
     plt.legend()
     plt.show()
 
-def ISI_plot(ax, folder, t0, size_fac, nu_extr):
-    file_names = os.listdir(folder)
+def ISI_plot(ax, folders, t0, size_fac, nu_extr):
     #ax = a4_plot()
-    for f, file_name in enumerate(file_names):
-        _, out_spikes, _, _, prop = get_csv_file_data(folder+'/'+file_name)
-        time, nu, _, _, alfa = prop
-        out_isi = count_ISI(out_spikes[out_spikes!=0])
-        x = np.arange(t0//2, time, t0)
-        for i in range(len(x)):
-            if i!=0:
-                c = np.sum([out_isi<=x[i]+t0//2]) - np.sum(y[:i])
-                y = np.append(y, c)
-            else:
-                c = np.sum([out_isi<=x[i]+t0//2])
-                y = np.array([c])
+    for f, folder in enumerate(folders):
+        _, out_spikes, _, _, prop, nu = get_csv_dir_data(folder)
+        time, _, _, alfa, _  = prop
+        out_spikes, _ = np.where(out_spikes!=0)
+        out_isi = count_ISI(out_spikes/10)
+        x = np.arange(0, time, t0)
+        y = np.array([0])
+        for i in x:
+            c = np.sum([out_isi<=i+t0]) - np.sum(y)
+            y = np.append(y, c)
+        y = y[1:]
         if f==0:
             total = np.array(y)
         else:
             total +=y
     if nu_extr!=0:
-        nu = nu_extr
-    fit = size_fac*x[total>1]**(-1-nu)
+        nu = [nu_extr]
     ax.plot(x[total>1], total[total>1],  marker ='o',markersize = 8, linewidth = 0, markeredgewidth=0, label = f'nu = {nu}, alpha = {alfa}')
     if size_fac!=0:
-        ax.plot(x[total>1], fit, linewidth = 3, label = f'nu = {nu}')
+        for i in range(len(nu)):
+            params, covariance = curve_fit(lambda x, s: s*(x**(-1-nu[i])), x[total>1], total[total>1], size_fac)
+            fit = (params[0])*(x[total>1]**(-1-nu[i]))
+            ax.plot(x[total>1], fit, linewidth = 3, label = f'nu = {nu[i]}, size_fact = {np.round(params[0]+np.sqrt(covariance[0, 0]), 3)}')
     ax.set_yscale('log')
     ax.set_xscale('log')
     ax.set_xlabel('ISI, ms', fontweight = 'bold', size = 10)

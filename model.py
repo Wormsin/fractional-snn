@@ -103,7 +103,7 @@ class FC():
         self.period = period
 
     def encoding(self):
-        rate = gamma(self.nu+1)*self.N_spk/(self.L_time**self.nu)
+        rate = gamma(self.nu+1)*self.N_spk/((self.L_time*self.dt)**self.nu)
         chain = np.zeros((self.input.shape[0], self.L_time))
         input_rate = self.input*rate
         for it in range(self.input.shape[0]):

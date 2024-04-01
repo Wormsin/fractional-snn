@@ -15,7 +15,7 @@ def save_one_neuron_exp(file_name, dV, V, out_spikes, in_spikes, input, spk_amp,
         data_prop = {
             'prop': [
             L_time*dt,
-            t_step*dt,
+            t_step,
             N_spk,
             alfa,
             len(input)]
