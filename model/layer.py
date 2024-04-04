@@ -13,7 +13,7 @@ class Layer():
         self.start_V = start_V
         self.weights = np.random.rand(in_features, out_features)
         self.M = np.zeros(out_features)
-        self.P = np.zeros(in_features)
+        self.P = np.zeros((out_features,in_features))
         self.V_mem = np.ones(out_features)*start_V
         self.dV = list(np.ones((out_features, 1))*[])
         self.N = np.zeros((out_features), dtype =np.int32)

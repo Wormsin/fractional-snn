@@ -7,9 +7,9 @@ import cv2
 
 def cross2cross(v, amount, train):
     if train:
-        dir = f'data_proc/dataset/train'
+        dir = f'data_proc/dataset/train/{v}'
     else:
-        dir = f'data_proc/dataset/test'
+        dir = f'data_proc/dataset/test/{v}'
     if not os.path.isdir(dir):
         os.makedirs(dir)
     #v = np.where(uniform(0, 1)>0.5, 1, 0)
@@ -20,18 +20,18 @@ def cross2cross(v, amount, train):
             data = np.random.randint(150, 255, size=mask0.shape)*mask0-np.random.randint(0, 80, size=mask0.shape)*(mask0-1)
         elif v==1:
             data = np.random.randint(150, 255, size=mask1.shape)*mask1-np.random.randint(0, 80, size=mask1.shape)*(mask1-1)
-        cv2.imwrite(dir+'/'+f'img{c}_{v}.png', data) 
+        cv2.imwrite(dir+'/'+f'img{c}.png', data) 
 
 
 def encoding(data, N_spk, L_time, dt, t_step):
     data = data.flatten()
     t_step = int(t_step/dt)
     nu = np.round(data, 1)
-    nu = np.where(nu<0.2, 0.2, nu)
+    nu = np.where(nu<=0.2, 0.3, nu)
     nu = np.where(nu==1, 0.9, nu)
     rate = gamma(nu+1)*N_spk/((L_time*dt)**nu)
-    chain = np.zeros((data.shape[0], L_time))
-    for it in range(data.shape[0]):
+    chain = np.zeros((len(data), L_time))
+    for it in range(len(data)):
         t=0            
         for i in range(L_time):
             if i==t:

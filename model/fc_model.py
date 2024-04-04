@@ -9,11 +9,10 @@ import os
     
 
 class FC():
-    def __init__(self, layers:layer.Layer, L_time) -> None:
+    def __init__(self, layers:layer.Layer, time, dt) -> None:
         self.layers = layers
-        self.L_time = L_time 
-        self.dt = 0.1
-        self.time = np.arange(0, L_time, self.dt)
+        self.L_time = int(time/dt)
+        self.dt = dt
         self.train = True
         self.classes =  layers[-1].out_features
         self.V_out = np.ones((1, self.classes))*self.layers[-1].start_V
@@ -23,16 +22,34 @@ class FC():
         layer.P, layer.M, layer.weights=learning.stdp(layer.P, layer.M, layer.weights, spikes, in_spks)
 
     def load_weights(self, dir):
+        lst = os.listdir(dir)
+        lst = [int(name[-5]) for name in lst]
+        indxes = np.argsort(lst)
         file_names = os.listdir(dir)
-        for i, layer in enumerate(self.layers):
-            file_name = file_names[i]
-            with open(file_name, 'r') as f:
-                reader = csv.reader(f)
+        for i, indx in enumerate(indxes):
+            file_name = file_names[indx]
+            layer = self.layers[i]
+            with open(dir+'/'+file_name, 'r') as f:
+                reader = csv.reader(f, delimiter=",")
                 data = list(reader)
             data_array = np.array(data)
             layer.weights = data_array.astype(float)
+    
+    def reset(self):
+        for layer in self.layers:
+            layer.M = np.zeros(layer.out_features)
+            layer.P = np.zeros((layer.out_features,layer.in_features))
+            layer.V_mem = np.ones(layer.out_features)*layer.start_V
+            layer.dV = list(np.ones((layer.out_features, 1))*[])
+            layer.N = np.zeros((layer.out_features), dtype =np.int32)
+            layer.tr = np.ones((layer.out_features, 1))*layer.neuron.tref
+            layer.out_spikes = np.zeros((layer.out_features))
+
 
     def forward(self, input_spikes):
+        self.V_out = np.ones((1, self.classes))*self.layers[-1].start_V
+        self.spks_out = np.zeros((1, self.classes))
+        self.reset()
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
             for c, layer in enumerate(self.layers):
@@ -41,10 +58,10 @@ class FC():
                 if self.train:
                     self.learn_step(layer, spikes, in_spks)
                 if c==len(self.layers)-1:
-                    V[-1]=np.where(spikes!=0, self.layers[-1].neuron.V_th, V[-1])
-                    V = np.concatenate((V, v.reshape(1, self.classes)))
-                    out_spikes = np.concatenate((out_spikes, spikes.reshape(1, self.classes)*self.time[i]))
-        return (out_spikes!=0)*1
+                    self.V_out[-1]=np.where(spikes!=0, self.layers[-1].neuron.V_th, self.V_out[-1])
+                    self.V_out = np.concatenate((self.V_out, v.reshape(1, self.classes)))
+                    self.spks_out = np.concatenate((self.spks_out, spikes.reshape(1, self.classes)*i/self.dt))
+        return (self.spks_out!=0)*1
 
 
 

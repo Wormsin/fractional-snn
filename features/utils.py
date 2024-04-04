@@ -3,6 +3,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import csv
 import os
+import cv2
 from scipy.optimize import curve_fit
 
 
@@ -87,15 +88,47 @@ def count_ISI(spikes):
     return isi
 
 
-def plot_spks(out_spikes, range_t, classes, img_file):
+def plot_inspks(out_spikes, T, dt, nu, img_file):
+    range_t = np.arange(0, T*dt, dt)
     class_name = img_file[-5]
     ax = a4_plot()
+    ax2 = a4_plot()
+    for i in range(len(nu)):
+        #ax.vlines(range_t[out_spikes[i]!=0], 0+i, 1+i, color = (0.1, 0.5, 0.5), label = f"neuron: {i+1}")
+        ax.scatter(range_t[out_spikes[i]!=0], out_spikes[i][out_spikes[i]!=0]*(i+1),  s=3, label = f"neuron: {i+1}, nu = {nu[i]}")
+    ax.set_xlim([-1, range_t[-1]+1])
+    ax.get_yaxis().set_visible(False)
+    ax.set_title(f'input spikes for image of class: {class_name}', fontweight ='bold', fontsize = 11, loc = 'left')
+    ax.set_xlabel('t, с')
+    img = cv2.imread(img_file)
+    ax2.imshow(img, cmap='gray')
+    ax.legend( loc='upper left',bbox_to_anchor=(0.99, 1), frameon = False, )
+    plt.show()
+    
+def plot_outspks(out_spikes, T, dt, classes, img_file):
+    range_t = np.arange(0, T*dt, dt)
+    class_name = img_file[-5]
+    ax = a4_plot()
+    ax2 = a4_plot()
     for i in range(classes):
-        ax.vlines(range_t[out_spikes[i]!=0], 0+i, 1+i, color = (0.1, 0.5, 0.5*i))
+        ax.vlines(range_t[out_spikes[i]!=0], 0+i, 1+i, color = (0.1, 0.5, 0.5*i), label = f"neuron: {i+1}")
+        #ax.scatter(range_t[out_spikes[i]!=0], out_spikes[i][out_spikes[i]!=0]*(i+1),  s=3, label = f"neuron: {i+1}")
     ax.set_xlim([-1, range_t[-1]+1])
     ax.get_yaxis().set_visible(False)
     ax.set_title(f'output spikes for image of class: {class_name}', fontweight ='bold', fontsize = 11, loc = 'left')
     ax.set_xlabel('t, с')
-    plt.imshow(img_file, cmap='gray')
+    img = cv2.imread(img_file)
+    ax2.imshow(img, cmap='gray')
+    ax.legend( loc='upper left',bbox_to_anchor=(0.99, 1), frameon = False, )
     plt.show()
-    
+
+def plot_v_out(model, T, dt, V_th, V_rest, alfa):
+    ax = a4_plot()
+    range_t = np.arange(0, T*dt, dt)
+    ax.plot(range_t, model.V_out)
+    ax.hlines(V_th, 0, range_t[-1], color = 'r')
+    ax.hlines(V_rest, 0, range_t[-1], color = 'g')
+    ax.set_xlim([-1, range_t[-1]+1])
+    ax.set_title(f'output neuron membrane potential, alfa = {alfa}', fontweight ='bold', fontsize = 11, loc='left')
+    ax.set_xlabel('time, ms', fontweight ='bold', fontsize = 11)
+    plt.show()
