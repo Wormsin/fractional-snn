@@ -15,7 +15,7 @@ def a4_plot():
     ax = fig.add_axes([0.1,0.1,0.5,0.8])
     return ax
 
-def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest, legend, title = ""):
+def plot_neuron_exp(in_features, out_features, in_spikes, out_spikes, V, range_t, V_th, V_rest, legend, title = ""):
     mpl.rcParams['pdf.fonttype'] = 42
     mpl.rcParams['ps.fonttype'] = 42
     fig, ax = plt.subplots(3, figsize=(10/1.5,6/1.5), gridspec_kw={'hspace':1})
@@ -56,32 +56,22 @@ def plot_spikes(in_features, out_features, in_spikes, out_spikes, V, range_t, V_
     plt.show()
 
 
-def ISI_plot(ax, alfa, time, out_spikes,  t0, size_fac, nu_extr):
+def ISI_plot(filen,color,ax, time, t0, size_fac, nu):
+    out_spikes = []
+    with open(filen, 'r') as file:
+        csvreader = csv.reader(file)
+        for c, row in enumerate(csvreader):
+            if c>0:
+                out_spikes.append(float(row[0]))
     #ax = a4_plot()
-    out_spikes, _ = np.where(out_spikes!=0)
+    out_spikes = np.array(out_spikes)
     out_isi = count_ISI(out_spikes/10)
     x = np.arange(0, time, t0)
     y = np.array([0])
     for i in x:
         c = np.sum([out_isi<=i+t0]) - np.sum(y)
         y = np.append(y, c)
-    y = y[1:]
-    if nu_extr!=0:
-        nu = [nu_extr]
-    ax.plot(x[y>1], y[y>1],  marker ='o',markersize = 8, linewidth = 0, markeredgewidth=0, label = f'nu = {nu}, alpha = {alfa}')
-    if size_fac!=0:
-        for i in range(len(nu)):
-            params, covariance = curve_fit(lambda x, s: s*(x**(-1-nu[i])), x[y>1], y[y>1], size_fac)
-            fit = (params[0])*(x[y>1]**(-1-nu[i]))
-            ax.plot(x[y>1], fit, linewidth = 3, label = f'nu = {nu[i]}, size_fact = {np.round(params[0]+np.sqrt(covariance[0, 0]), 3)}')
-    ax.set_yscale('log')
-    ax.set_xscale('log')
-    ax.set_xlabel('ISI, ms', fontweight = 'bold', size = 10)
-    ax.set_ylabel('ISI number', fontweight = 'bold', size = 10)
-    #ax.legend(labels = [f'nu = {nu}, alpha = {alfa}', 'approximation'])
-    ax.grid(True,which='major',axis='both',alpha=0.3)
-    #plt.show()
-    return ax
+    return y
 
 def count_ISI(spikes):
     isi = spikes[1:]-spikes[0:-1]
@@ -132,3 +122,55 @@ def plot_v_out(model, T, dt, V_th, V_rest, alfa):
     ax.set_title(f'output neuron membrane potential, alfa = {alfa}', fontweight ='bold', fontsize = 11, loc='left')
     ax.set_xlabel('time, ms', fontweight ='bold', fontsize = 11)
     plt.show()
+
+def get_csv_dir_data(dir):
+    lst = os.listdir(dir)
+    lst = [int(name.split('_')[-1][:-4]) for name in lst]
+    indxes = np.argsort(lst)
+    file_names = os.listdir(dir)
+    for i, indx in enumerate(indxes):
+        file_name = file_names[indx]
+        with open(os.path.join(dir, file_name), 'r') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+        data_array = np.array(data)
+        prop = data_array[1:6, 0].astype(float)
+        num_inputs = prop[-1]
+        nu = data_array[1:int(num_inputs+1), 1].astype(float)
+        weights = data_array[1:int(num_inputs+1), 2].astype(float)
+        v, out_s, dv = data_array[1:, 3].astype(float), data_array[1:, 4].astype(float), data_array[1:, 5].astype(float)
+        in_s = data_array[1:, 6:].astype(float)
+        in_s = in_s.T
+        if i ==0:
+            V = v
+            out_spikes = out_s
+            in_spikes = in_s
+            dV = dv[:-1]
+        else:
+            V = np.concatenate((V, v))
+            out_spikes = np.concatenate((out_spikes, out_s))
+            in_spikes = np.concatenate((in_spikes, in_s), axis = 1)
+            dV = np.concatenate((dV, dv[:-1]))
+    out_spikes = np.expand_dims(out_spikes, 1)
+    V = np.expand_dims(V, 1)
+    weights = np.expand_dims(weights, 1)
+    prop[0]*=len(file_names)
+    prop[2]*=len(file_names)
+    return V, out_spikes, in_spikes, [dV], prop, nu, weights
+
+def get_csv_file_data(file_name):
+    with open(file_name, 'r') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+    data_array = np.array(data)
+    prop = data_array[1:6, 0].astype(float)
+    num_inputs = prop[-1]
+    nu = data_array[1:int(num_inputs+1), 1].astype(float)
+    weights = data_array[1:int(num_inputs+1), 2].astype(float)
+    V, out_spikes, dV = data_array[1:, 3].astype(float), data_array[1:, 4].astype(float), data_array[1:, 5].astype(float)
+    in_spikes = data_array[1:, 6:].astype(float)
+    in_spikes = in_spikes.T
+    out_spikes = np.expand_dims(out_spikes, 1)
+    V = np.expand_dims(V, 1)
+    weights = np.expand_dims(weights, 1)
+    return V, out_spikes, in_spikes, [dV[:-1]], prop, nu, weights

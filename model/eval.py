@@ -7,7 +7,7 @@ import os
 from features import utils
 
 
-def eval(model:fc_model.FC, weights_dir, data_dir, N_spk, dt, t_step, V_th, V_rest, alfa):
+def eval(model:fc_model.FC, weights_dir, data_dir, dt, t_step, V_th, V_rest, alfa):
     model.train = False
     model.load_weights(weights_dir)
     dir_classes = os.listdir(data_dir)
@@ -18,7 +18,7 @@ def eval(model:fc_model.FC, weights_dir, data_dir, N_spk, dt, t_step, V_th, V_re
     imgs = np.dstack(file_names).flatten()
     for file_name in imgs:
         data = np.asarray(cv2.imread(file_name, cv2.IMREAD_GRAYSCALE),  dtype="float")
-        input_spikes, nu = code.encoding(data/255, N_spk, model.L_time, dt, t_step)
+        input_spikes, nu = code.encoding(data/255, model.L_time, dt, t_step)
         out_spks = model.forward(input_spikes)
     #plot out spikes
         utils.plot_v_out(model, model.L_time, model.dt, V_th, V_rest, alfa)

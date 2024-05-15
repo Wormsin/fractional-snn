@@ -14,7 +14,7 @@ class Layer():
         self.weights = np.random.rand(in_features, out_features)
         self.M = np.zeros(out_features)
         self.P = np.zeros((out_features,in_features))
-        self.V_mem = np.ones(out_features)*start_V
+        self.V_mem = np.ones(out_features)*self.start_V
         self.dV = list(np.ones((out_features, 1))*[])
         self.N = np.zeros((out_features), dtype =np.int32)
         self.tr = np.ones((out_features, 1))*neuron.tref
@@ -33,3 +33,4 @@ class Layer():
             self.calc_dV(v_old, v_new, i)
             self.out_spikes[i] = out_spk
         return self.out_spikes, self.V_mem
+    

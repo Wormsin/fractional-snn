@@ -9,7 +9,8 @@ import os
     
 
 class FC():
-    def __init__(self, layers:layer.Layer, time, dt) -> None:
+    def __init__(self, layers:layer.Layer, time, dt, reset:bool) -> None:
+        self.reset_2_initial = reset
         self.layers = layers
         self.L_time = int(time/dt)
         self.dt = dt
@@ -47,9 +48,10 @@ class FC():
 
 
     def forward(self, input_spikes):
+        if self.reset_2_initial:
+            self.reset()
         self.V_out = np.ones((1, self.classes))*self.layers[-1].start_V
         self.spks_out = np.zeros((1, self.classes))
-        self.reset()
         for i in range(self.L_time - 1):
             spikes = input_spikes[:, i]
             for c, layer in enumerate(self.layers):

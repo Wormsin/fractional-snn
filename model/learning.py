@@ -1,5 +1,5 @@
 import numpy as np
-from model.params import Am, Ap, dt, tm, tp, stdp_rate
+from model.net_params import Am, Ap, dt, tm, tp, stdp_rate
 
 
 def stdp(P, M, weights, out_spk, in_spk, A_minus = Am, dt=dt, t_m=tm, A_plus=Ap, t_p=tp, lr=stdp_rate):
