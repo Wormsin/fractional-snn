@@ -53,4 +53,8 @@ proc.plot_files(folder_name = "output_data")
 | alpha      | x      | parameter of LIF neuron                                              |
 | input      | [x]    | coefficients for input spikes rate                                   |
 
+## results
+
+
+## publication
 
