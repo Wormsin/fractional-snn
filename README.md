@@ -1,11 +1,13 @@
+# Fractional order Leaky Integrate-and-Fire Neuron Model and Intermittent spikes
+
 <p align="center">
   <img src = "https://github.com/Wormsin/fractional-snn/assets/142012648/cc7e4c98-3417-468f-b96e-7ed672fb632f" width="442" height="252">
   <img src = "https://github.com/Wormsin/fractional-snn/assets/142012648/24d818ff-feb3-4ad1-b506-401ed0f206cd" width="442" height="252">
 </p>
+<p align="center">
+<img src = "https://github.com/user-attachments/assets/acfc95dd-362f-47b6-9b7a-951b914cfdb7" width="400">
+</p>
 
-![Screenshot From 2025-02-14 23-03-15](https://github.com/user-attachments/assets/acfc95dd-362f-47b6-9b7a-951b914cfdb7)
-
-# Fractional order Leaky Integrate-and-Fire Neuron Model and Intermittent spikes
 This project implements processing of intermittent spike trains by fractional leaky integrate-and-fire neural model. \
 Thus the input data is encoded with a fractional Poisson distribution with a long-term memory parameter **nu**.
 ## model.py 
@@ -64,10 +66,10 @@ This work investigates the statistical properties of the integrator's response t
 
 Additionally, an analysis of TiO₂ material's response to UV impulse signals was conducted, demonstrating that the power-law distribution of current relaxation can be approximated by the Mittag-Leffler function.
 
-
-![Screenshot From 2025-02-14 23-04-48](https://github.com/user-attachments/assets/cf395bc1-8f43-423a-bd9b-7bd0a9b4bc0a)
-![Screenshot From 2025-02-14 23-05-05](https://github.com/user-attachments/assets/21de8c6c-bdd5-46fd-ab9d-44e47ff5bc90)
-
+<p align="center">
+<img src = "https://github.com/user-attachments/assets/cf395bc1-8f43-423a-bd9b-7bd0a9b4bc0a" width="400">
+<img src = "https://github.com/user-attachments/assets/21de8c6c-bdd5-46fd-ab9d-44e47ff5bc90" width="400">
+</p>
 
 
 ## publication
